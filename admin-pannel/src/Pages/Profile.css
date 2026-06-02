@@ -1,0 +1,273 @@
+/* Unique Viewport Wrapper */
+.pro-profile-viewport {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #E0E5EC;
+  /* Added dynamic padding for mobile top/bottom margin */
+  padding: 40px 20px; 
+  box-sizing: border-box;
+  overflow-y: auto; /* Ensures scrolling on short mobile screens */
+}
+
+/* 3D Profile Card */
+.pro-profile-card {
+  background: #E0E5EC;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 40px;
+  box-shadow: 9px 9px 16px #BABECC, -9px -9px 16px #ffffff;
+  overflow: hidden;
+  margin: auto; /* Centers card in the padded viewport */
+  animation: proFadeUp 0.7s ease-out;
+}
+
+/* Avatar Styling with Logo */
+.pro-avatar-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 15px;
+}
+
+.pro-avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #E0E5EC;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 5px 5px 10px #BABECC, -5px -5px 10px #ffffff;
+  overflow: hidden; /* Clips logo to circle */
+}
+
+.pro-avatar-img {
+  width: 70%; /* Padding around logo inside avatar */
+  height: 70%;
+  object-fit: contain;
+}
+
+.pro-online-badge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  background: #00ca71;
+  border: 3px solid #E0E5EC;
+  border-radius: 50%;
+}
+
+/* Header Text */
+.pro-profile-header {
+  padding: 30px 20px 10px;
+  text-align: center;
+}
+
+.pro-profile-header h2 {
+  margin: 10px 0 0;
+  color: #333;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.pro-user-email {
+  color: #777;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.pro-admin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: white;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6C5CE7;
+  text-transform: uppercase;
+  box-shadow: inset 2px 2px 5px #BABECC, inset -2px -2px 5px #ffffff;
+}
+
+/* Body Content */
+.pro-profile-body {
+  padding: 20px 30px 35px;
+}
+
+.pro-input-section {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.pro-input-section label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  margin: 0 0 8px 10px;
+  text-transform: uppercase;
+}
+
+.pro-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #E0E5EC;
+  padding: 0 15px;
+  border-radius: 50px; /* Pill shape for consistency */
+  box-shadow: inset 4px 4px 8px #BABECC, inset -4px -4px 8px #ffffff;
+  margin-bottom: 12px;
+}
+
+.pro-field-icon {
+  color: #6C5CE7;
+  opacity: 0.6;
+}
+
+.pro-input-wrapper input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 14px;
+  outline: none;
+  font-size: 14px;
+  color: #444;
+}
+
+/* Buttons */
+.pro-action-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 50px;
+  background: #6C5CE7;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 4px 4px 10px #BABECC, -4px -4px 10px #ffffff;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.pro-action-btn:active {
+  transform: scale(0.98);
+  box-shadow: inset 4px 4px 8px #4a3eb3;
+}
+
+.pro-secondary {
+  background: #E0E5EC;
+  color: #6C5CE7;
+}
+
+.pro-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.05);
+  margin: 25px 0;
+  box-shadow: 0 1px 0 #ffffff;
+}
+
+.pro-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #ff4d4f;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 50px;
+  font-weight: 700;
+  box-shadow: 4px 4px 10px #BABECC, -4px -4px 10px #ffffff;
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 480px) {
+  .pro-profile-viewport {
+    padding: 20px 15px; /* Tighter margins for small phones */
+  }
+  
+  .pro-profile-card {
+    border-radius: 30px; /* Softer corners on mobile */
+  }
+
+  .pro-profile-body {
+    padding: 15px 20px 30px;
+  }
+
+  .pro-profile-header h2 {
+    font-size: 20px;
+  }
+}
+
+/* Short height mobile fix */
+@media (max-height: 660px) {
+  .pro-profile-header {
+    padding-top: 20px;
+  }
+  .pro-avatar-wrapper {
+    width: 70px;
+    height: 70px;
+  }
+  .pro-divider {
+    margin: 15px 0;
+  }
+}
+
+@keyframes proFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Password Toggle Button Styling */
+.pro-password-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 10px;
+  cursor: pointer;
+  color: #6C5CE7;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+}
+
+.pro-password-toggle:hover {
+  opacity: 1;
+}
+
+/* Ensure the input wrapper treats the button as a separate element */
+.pro-input-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Ensures the toggle is pushed to the right */
+}
+
+.pro-input-wrapper input {
+  flex-grow: 1; /* Makes input take up remaining space */
+}
+
+
+/* Logout Button Hover Effect */
+.pro-logout-btn {
+  /* ... existing styles ... */
+  transition: all 0.3s ease; /* Smooth transition for the hover */
+  cursor: pointer;
+}
+
+.pro-logout-btn:hover {
+  background: #ff7875; /* Slightly lighter red on hover */
+  transform: translateY(-2px); /* Slight lift effect */
+  box-shadow: 6px 6px 20px #BABECC, -6px -6px 20px #ffffff; /* Enhanced shadow */
+}
+
+.pro-logout-btn:active {
+  transform: translateY(0); /* Returns to normal position */
+  background: #d9363e; /* Darker red when clicked */
+  box-shadow: inset 4px 4px 8px #a32a2c, inset -4px -4px 8px #ff8a8c; /* Inset shadow for "pressed" look */
+}

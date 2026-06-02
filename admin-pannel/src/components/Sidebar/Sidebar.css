@@ -1,0 +1,221 @@
+:root {
+  --sidebar-wide: 280px;
+  --sidebar-narrow: 80px;
+  --sidebar-bg: #1f1f2e;
+  --nav-height: 60px;
+  --text-main: #e0e0e0;
+  --text-muted: #b0b0c0;
+  --accent: #3b82f6;
+  --hover-bg: rgba(59, 130, 246, 0.1);
+  --active-bg: rgba(59, 130, 246, 0.2);
+  --transition: all 0.3s ease;
+  --sub-bg: rgba(31, 31, 46, 0.8);
+}
+
+/* ================= Sidebar Container ================= */
+.sidebar-container {
+  width: var(--sidebar-wide);
+  background-color: rgba(0, 13, 0, 0.944); 
+
+  color: var(--text-main);
+  height: calc(100vh - var(--nav-height));
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: var(--transition);
+  box-shadow: 4px 0 20px rgba(0,0,0,0.2);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Collapsed */
+.sidebar-container.collapsed {
+  width: var(--sidebar-narrow);
+}
+
+/* Sidebar Controls */
+.sidebar-controls {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Hide arrow on small screens */
+@media (max-width: 768px) {
+  .arrow-toggle {
+    display: none;
+  }
+}
+
+.arrow-toggle {
+  /* arrow backgrund color */
+  background-color: rgba(0, 13, 0, 0.944); 
+  border: none;
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: var(--transition);
+}
+.arrow-toggle:hover {
+    background-color: rgba(0, 13, 0, 0.944); 
+
+  color: white;
+}
+
+/* ================= Menu Items ================= */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 120px 0;
+  gap: 4px;
+
+  /* navbar color chcanged here  */
+  background-color: rgba(0, 13, 0, 0.944); 
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 20px;
+  border-left: 4px solid transparent;
+  border-radius: 8px;
+  transition: var(--transition);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.menu-item:hover {
+  background: var(--hover-bg);
+  color: white;
+}
+
+.menu-item.active {
+  background: var(--active-bg);
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+/* .icon {
+  font-size: 1.4rem;
+  min-width: 30px;
+  display: flex;
+  justify-content: center;
+  transition: var(--transition);
+} */
+ .icon {
+  font-size: 1.3rem;
+  min-width: 30px;
+  display: flex;
+  justify-content: center;
+  color: var(--text-main);
+  transition: var(--transition);
+}
+
+
+.label {
+  flex: 1;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.chevron {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  transition: transform 0.3s, color 0.3s;
+}
+
+.menu-item.active .chevron {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+/* ================= Submenu ================= */
+.submenu {
+  display: flex;
+  flex-direction: column;
+  background: var(--sub-bg);
+  border-left: 2px solid rgba(59,130,246,0.3);
+  margin-left: 5px;
+  border-radius: 6px;
+  padding: 4px 0;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sub-item {
+  padding: 10px 10px 10px 50px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sub-item:hover {
+  color: white;
+  background: rgba(59,130,246,0.2);
+}
+
+.sub-item.active {
+  color: var(--accent);
+  background: rgba(59,130,246,0.3);
+  font-weight: 600;
+}
+
+/* ================= Mobile Sidebar Backdrop ================= */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  transition: var(--transition);
+}
+
+/* ================= Mobile Responsive ================= */
+@media (max-width: 768px) {
+  .sidebar-container {
+    transform: translateX(-100%);
+    width: 280px !important;
+  }
+
+  .sidebar-container.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop.show {
+    display: block;
+  }
+}
+
+/* ================= Smooth Scrollbar ================= */
+.sidebar-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+}
+
+.sidebar-container:hover::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+}

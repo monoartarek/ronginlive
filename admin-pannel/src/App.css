@@ -1,0 +1,64 @@
+:root {
+  --nav-height: 70px;
+  --sidebar-wide: 280px;
+  --sidebar-narrow: 80px;
+  --primary-bg: #f4f7fe;
+  --sidebar-bg: #111c44;
+  --accent: #3b82f6;
+  --text-main: #ffffff;
+  --text-muted: #a3adc2;
+  --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  background-color: var(--primary-bg);
+  overflow: hidden; /* Prevent body scroll; we use container scroll */
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  
+}
+
+/* The container holding Sidebar + Main Content */
+.layout-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  transition: var(--transition);
+  margin-left: var(--sidebar-wide);
+  padding:1px;
+  height: calc(100vh - var(--nav-height));
+}
+
+/* Desktop Shrink Logic */
+.layout-body.collapsed .main-content {
+  margin-left: var(--sidebar-narrow);
+}
+
+/* Mobile Logic */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+  }
+  .app-wrapper {
+    padding-bottom:25px;
+    background-color:#0a0f24;
+  
+}
+}
