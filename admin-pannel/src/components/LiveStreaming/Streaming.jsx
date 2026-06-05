@@ -2014,55 +2014,54 @@ export default function LiveStreaming(){
   /* ══════════════════════════════════════════════
      CUT ALL — FIXED
   ══════════════════════════════════════════════ */
-  const doCutAll = async()=>{
-    if(!cutAllModal) return;
-    const type = cutAllModal;
-    setCutAllLoading(true);
-    try{
-      if(type==="ALL"){
-        /* ─── USE MASTER KEY for the cloud function ─── */
-        const res = await Parse.Cloud.run(
-          "deleteAllStreamingData",
-          {},
-          { useMasterKey: true }           // ← FIX: pass master key
-        );
-        const r = res?.result || res || {};
-        const deleted = r.deleted || {};
-        const streamCount = deleted.streaming ?? 0;
-        const cmtCount    = deleted.streamingComments ?? 0;
-        toast$(`✓ Cut all! ${streamCount} streams · ${cmtCount} comments cleared.`,"success");
-      } else {
-        /* ─── type-specific bulk update ─── */
-        const q = new Parse.Query("Streaming");
-        q.equalTo("streaming", true);
-        if(type!=="ALL") q.equalTo("party_type", type);
-        q.limit(1000);
-        const items = await q.find({useMasterKey:true});
+ const doCutAll = async () => {
+  if (!cutAllModal) return;
+  const type = cutAllModal;
+  setCutAllLoading(true);
 
-        /* batch save in chunks of 50 to avoid timeouts */
-        const CHUNK = 50;
-        let total = 0;
-        for(let i=0; i<items.length; i+=CHUNK){
-          const chunk = items.slice(i, i+CHUNK);
-          chunk.forEach(obj=>obj.set("streaming",false));
-          await Parse.Object.saveAll(chunk, {useMasterKey:true});
-          total += chunk.length;
-        }
-        toast$(`✓ Cut ${total} ${type} stream${total!==1?"s":""}!`,"success");
-      }
-      /* leave if current viewer affected */
-      if(viewer && (type==="ALL" || viewer.get("party_type")===type)){
-        leave();
-      }
-      fetchStreams();
-    }catch(err){
-      console.error("CutAll error:", err);
-      toast$("Cut all failed: "+err.message,"error");
-    }finally{
+  try {
+    const q = new Parse.Query("Streaming");
+    q.equalTo("streaming", true);
+    if (type !== "ALL") q.equalTo("party_type", type);
+    q.limit(1000);
+
+    const items = await q.find({ useMasterKey: true });
+
+    if (items.length === 0) {
+      toast$(`No ${type === "ALL" ? "" : type + " "}streams to cut.`, "info");
       setCutAllLoading(false);
       setCutAllModal(null);
+      return;
     }
-  };
+
+    /* batch update in chunks of 50 */
+    const CHUNK = 50;
+    let total = 0;
+    for (let i = 0; i < items.length; i += CHUNK) {
+      const chunk = items.slice(i, i + CHUNK);
+      chunk.forEach(obj => obj.set("streaming", false));
+      await Parse.Object.saveAll(chunk, { useMasterKey: true });
+      total += chunk.length;
+    }
+
+    toast$(
+      `✓ Cut ${total} ${type === "ALL" ? "" : type + " "}stream${total !== 1 ? "s" : ""}!`,
+      "success"
+    );
+
+    if (viewer && (type === "ALL" || viewer.get("party_type") === type)) {
+      leave();
+    }
+
+    fetchStreams();
+  } catch (err) {
+    console.error("CutAll error:", err);
+    toast$("Cut all failed: " + err.message, "error");
+  } finally {
+    setCutAllLoading(false);
+    setCutAllModal(null);
+  }
+};
 
   /* ── cut single stream ── */
   const cutStream = async()=>{
