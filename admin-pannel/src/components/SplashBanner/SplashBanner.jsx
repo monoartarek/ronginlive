@@ -106,7 +106,7 @@ export default function SplashBanner() {
     try {
       const parseFile = new Parse.File(file.name, file);
       await parseFile.save({ useMasterKey: true });
-      // const Banner = Parse.Object.extend("SplashBanner");
+      // const Banner = Parse.Object.extend("SplashBanner");z
       const Banner = Parse.Object.extend("splash");
       const obj = new Banner();
       obj.set("images", parseFile);
