@@ -841,43 +841,77 @@ export default function Dashboard() {
      No user records transferred, just integers
   ══════════════════════════════════════════════ */
   const fetchStats = useCallback(async () => {
-    setLoadingStats(true);
-    try {
-      const User       = Parse.Object.extend("_User");
-      const now        = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekStart  = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  setLoadingStats(true);
+  try {
+    const User       = Parse.Object.extend("_User");
+    const now        = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart  = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const mk         = { useMasterKey: true };
 
-      const qTotal    = new Parse.Query(User);
-      const qMale     = new Parse.Query(User); qMale.equalTo("gender", "male");
-      const qFemale   = new Parse.Query(User); qFemale.equalTo("gender", "female");
-      const qManager  = new Parse.Query(User); qManager.equalTo("role", "manager");
-      const qReseller = new Parse.Query(User); qReseller.equalTo("role", "reseller");
-      const qSuspend  = new Parse.Query(User); qSuspend.equalTo("status", "suspended");
-      const qAdmin    = new Parse.Query(User); qAdmin.equalTo("isAdmin", true);
-      const qToday    = new Parse.Query(User); qToday.greaterThanOrEqualTo("createdAt", todayStart);
-      const qWeek     = new Parse.Query(User); qWeek.greaterThanOrEqualTo("createdAt", weekStart);
+    const qTotal     = new Parse.Query(User);
 
-      const [total, male, female, managers, resellers, suspended, admins, newToday, newWeek] =
-        await Promise.all([
-          qTotal.count({ useMasterKey: true }),
-          qMale.count({ useMasterKey: true }),
-          qFemale.count({ useMasterKey: true }),
-          qManager.count({ useMasterKey: true }),
-          qReseller.count({ useMasterKey: true }),
-          qSuspend.count({ useMasterKey: true }),
-          qAdmin.count({ useMasterKey: true }),
-          qToday.count({ useMasterKey: true }),
-          qWeek.count({ useMasterKey: true }),
-        ]);
+    const qMale      = new Parse.Query(User);
+    qMale.equalTo("gender", "male");
 
-      setStats({ total, male, female, managers, resellers, suspended, admins, newToday, newWeek });
-    } catch (err) {
-      console.error("Stats error:", err);
-    } finally {
-      setLoadingStats(false);
-    }
-  }, []);
+    const qFemale    = new Parse.Query(User);
+    qFemale.equalTo("gender", "female");
+
+    // ✅ FIXED: admin_role === "admin"  (was isAdmin / role)
+    const qAdmin     = new Parse.Query(User);
+    qAdmin.equalTo("admin_role", "admin");
+
+    // ✅ FIXED: isreseller === true  (was role === "reseller")
+    const qReseller  = new Parse.Query(User);
+    qReseller.equalTo("isreseller", true);
+
+    // ✅ FIXED: is_banned === true  (was isAdmin / status mismatch)
+    const qBanned    = new Parse.Query(User);
+    qBanned.equalTo("is_banned", true);
+
+    // ✅ status === "suspended" for suspended card
+    const qSuspended = new Parse.Query(User);
+    qSuspended.equalTo("status", "suspended");
+
+    const qToday     = new Parse.Query(User);
+    qToday.greaterThanOrEqualTo("createdAt", todayStart);
+
+    const qWeek      = new Parse.Query(User);
+    qWeek.greaterThanOrEqualTo("createdAt", weekStart);
+
+    const [
+      total, male, female,
+      admins, resellers, banned, suspended,
+      newToday, newWeek
+    ] = await Promise.all([
+      qTotal.count(mk),
+      qMale.count(mk),
+      qFemale.count(mk),
+      qAdmin.count(mk),
+      qReseller.count(mk),
+      qBanned.count(mk),
+      qSuspended.count(mk),
+      qToday.count(mk),
+      qWeek.count(mk),
+    ]);
+
+    setStats({
+      total,
+      male,
+      female,
+      admins,
+      resellers,
+      suspended: banned + suspended,   // both banned + suspended combined
+      managers:  admins,               // pills use managers key, reuse admins
+      newToday,
+      newWeek,
+    });
+  } catch (err) {
+    console.error("Stats error:", err);
+  } finally {
+    setLoadingStats(false);
+  }
+}, []);
 
   /* ══════════════════════════════════════════════
      FETCH RECENT USERS — 10 users, 4 fields only
