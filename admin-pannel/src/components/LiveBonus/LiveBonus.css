@@ -32,7 +32,7 @@
   min-height: 100vh;
   background: var(--bg);
   font-family: "Cabinet Grotesk", sans-serif;
-  color: var(--text-primary);
+  color: white;
   padding: clamp(16px, 4vw, 40px);
   position: relative;
   overflow: hidden;
@@ -160,14 +160,14 @@
 .field-group label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: white;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: color 0.25s;
 }
 
 .field-group:focus-within label {
-  color: var(--accent);
+  color: white;
 }
 
 .field-group input,
@@ -175,7 +175,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  color: var(--text-primary);
+  color: white;
   font-family: "Cabinet Grotesk", sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
@@ -198,7 +198,7 @@
 
 .field-group select option {
   background: var(--surface-2);
-  color: var(--text-primary);
+  color: white;
 }
 
 .field-group input::placeholder {
@@ -417,7 +417,7 @@ tbody td:last-child  { padding-right: 22px; text-align: right; }
 
 .type-badge.live {
   background: var(--accent-dim);
-  color: var(--accent);
+  color: white;
   border: 1px solid rgba(99, 219, 130, 0.2);
 }
 
