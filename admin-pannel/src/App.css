@@ -19,35 +19,30 @@
 
 body {
   background-color: var(--primary-bg);
-  overflow: hidden;
+  overflow: hidden; /* Prevent body scroll; we use container scroll */
 }
 
 .app-wrapper {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh;
 }
 
+/* The container holding Sidebar + Main Content */
 .layout-body {
   display: flex;
   flex: 1;
-  min-height: 0;
   position: relative;
   overflow: hidden;
 }
 
 .main-content {
   flex: 1;
-  min-width: 0;
   overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   transition: var(--transition);
   margin-left: var(--sidebar-wide);
-  padding: 1px;
+  padding:1px;
   height: calc(100vh - var(--nav-height));
-  height: calc(100dvh - var(--nav-height));
 }
 
 /* Desktop Shrink Logic */
@@ -59,10 +54,5 @@ body {
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0 !important;
-    height: calc(100dvh - var(--nav-height));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .app-wrapper {
-    background-color: #0a0f24;
   }
 }

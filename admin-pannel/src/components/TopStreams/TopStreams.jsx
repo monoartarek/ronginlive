@@ -1,9 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Parse from "../../parseConfig";
 
-/* ══════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════ */
 const PAGE_SIZE = 20;
 
 function avatarColor(str) {
@@ -20,43 +17,37 @@ function mapUser(u) {
   else if (typeof av === "string") avatarUrl = av;
   const rp = u.get("Room_priority");
   return {
-    objectId:    u.id,
-    uid:         String(u.get("uid") || "—"),
-    name:        u.get("name")     || "—",
-    username:    u.get("username") || u.get("email") || "—",
-    email:       u.get("email")    || "—",
-    roomPriority:rp === true || rp === "true",
-    myAgentId:   u.get("my_agent_id") || null, // plain ObjectId string
-    agencyName:  null,   // filled in after agent lookup
+    objectId:     u.id,
+    uid:          String(u.get("uid") || "—"),
+    name:         u.get("name")     || "—",
+    username:     u.get("username") || u.get("email") || "—",
+    email:        u.get("email")    || "—",
+    roomPriority: rp === true || rp === "true",
+    myAgentId:    u.get("my_agent_id") || null,
+    agencyName:   null,
     avatarUrl,
   };
 }
 
-/* ══════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════ */
+/* ── Toast ── */
 function Toast({ toast }) {
   if (!toast) return null;
   const cfg = {
-    success:"bg-emerald-900/95 border-emerald-500/40 text-emerald-200",
-    error:  "bg-red-950/95 border-red-500/40 text-red-200",
-    info:   "bg-sky-950/95 border-sky-500/40 text-sky-200",
+    success: "bg-emerald-900/95 border-emerald-500/40 text-emerald-200",
+    error:   "bg-red-950/95 border-red-500/40 text-red-200",
+    info:    "bg-sky-950/95 border-sky-500/40 text-sky-200",
   };
   const icons = { success:"✓", error:"✕", info:"ℹ" };
   return (
     <div className={`fixed top-5 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 z-[9999] flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl text-sm font-semibold backdrop-blur-sm max-w-sm ${cfg[toast.type]||cfg.info}`}
       style={{animation:"toastIn .3s cubic-bezier(.34,1.56,.64,1)"}}>
-      <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs shrink-0">
-        {icons[toast.type]||"ℹ"}
-      </span>
+      <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs shrink-0">{icons[toast.type]||"ℹ"}</span>
       {toast.msg}
     </div>
   );
 }
 
-/* ══════════════════════════════════════════
-   CONFIRM MODAL
-══════════════════════════════════════════ */
+/* ── Confirm Modal ── */
 function ConfirmModal({ data, onClose, onConfirm, loading }) {
   if (!data) return null;
   return (
@@ -66,8 +57,7 @@ function ConfirmModal({ data, onClose, onConfirm, loading }) {
         style={{background:"#0c0e1a",border:"1px solid rgba(255,255,255,0.1)",animation:"modalUp .3s cubic-bezier(.22,1,.36,1)"}}>
         <div className={`h-0.5 ${data.enable?"bg-gradient-to-r from-emerald-400 to-teal-400":"bg-gradient-to-r from-red-400 to-rose-400"}`}/>
         <div className="p-7 flex flex-col items-center gap-4 text-center">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl
-            ${data.enable?"bg-emerald-500/15 border border-emerald-500/30":"bg-red-500/15 border border-red-500/30"}`}>
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${data.enable?"bg-emerald-500/15 border border-emerald-500/30":"bg-red-500/15 border border-red-500/30"}`}>
             {data.enable?"🟢":"🔴"}
           </div>
           <div>
@@ -90,8 +80,7 @@ function ConfirmModal({ data, onClose, onConfirm, loading }) {
               Cancel
             </button>
             <button onClick={onConfirm} disabled={loading}
-              className={`flex-1 py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[.98]
-                ${data.enable?"bg-emerald-600 hover:bg-emerald-500":"bg-red-600 hover:bg-red-500"}`}>
+              className={`flex-1 py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[.98] ${data.enable?"bg-emerald-600 hover:bg-emerald-500":"bg-red-600 hover:bg-red-500"}`}>
               {loading&&<span className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin"/>}
               {loading?"Updating…":data.confirmLabel}
             </button>
@@ -102,9 +91,7 @@ function ConfirmModal({ data, onClose, onConfirm, loading }) {
   );
 }
 
-/* ══════════════════════════════════════════
-   USER AVATAR
-══════════════════════════════════════════ */
+/* ── User Avatar ── */
 function UserAvatar({ user, size=36 }) {
   const bg  = avatarColor(user.username);
   const r   = Math.round(size*0.28);
@@ -120,19 +107,18 @@ function UserAvatar({ user, size=36 }) {
             {ini}
           </div>
       }
-      <span className="absolute -bottom-0.5 -right-0.5"
-        style={{width:12,height:12,borderRadius:"50%",
-          background:user.roomPriority?"#10b981":"#6b7280",
-          border:"2px solid #060c18",
-          boxShadow:user.roomPriority?"0 0 6px rgba(16,185,129,0.6)":"none",
-          display:"block"}}/>
+      <span className="absolute -bottom-0.5 -right-0.5" style={{
+        width:12,height:12,borderRadius:"50%",
+        background:user.roomPriority?"#10b981":"#6b7280",
+        border:"2px solid #060c18",
+        boxShadow:user.roomPriority?"0 0 6px rgba(16,185,129,0.6)":"none",
+        display:"block"
+      }}/>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════
-   PRIORITY TOGGLE
-══════════════════════════════════════════ */
+/* ── Priority Toggle ── */
 function PriorityToggle({ user, onToggle, loading }) {
   const isLoading = loading===user.objectId;
   return (
@@ -150,9 +136,7 @@ function PriorityToggle({ user, onToggle, loading }) {
   );
 }
 
-/* ══════════════════════════════════════════
-   AGENCY NAME BADGE
-══════════════════════════════════════════ */
+/* ── Agency Badge ── */
 function AgencyBadge({ name }) {
   if (!name) return <span className="text-slate-600 text-xs">—</span>;
   return (
@@ -164,21 +148,22 @@ function AgencyBadge({ name }) {
 }
 
 /* ══════════════════════════════════════════
-   MAIN COMPONENT
+   MAIN
 ══════════════════════════════════════════ */
 export default function AgencyClients() {
-  const [users,         setUsers]         = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [agencyLoading, setAgencyLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null);
-  const [toast,         setToast]         = useState(null);
-  const [confirm,       setConfirm]       = useState(null);
-  const [searchInput,   setSearchInput]   = useState("");
-  const [search,        setSearch]        = useState("");
-  const [page,          setPage]          = useState(0);
-  const [totalCount,    setTotalCount]    = useState(0);
-  const [viewMode,      setViewMode]      = useState("list");
-  const [stats,         setStats]         = useState({total:0,enabled:0,disabled:0});
+  const [users,          setUsers]          = useState([]);
+  const [loading,        setLoading]        = useState(true);
+  const [agencyLoading,  setAgencyLoading]  = useState(false);
+  const [actionLoading,  setActionLoading]  = useState(null);
+  const [toast,          setToast]          = useState(null);
+  const [confirm,        setConfirm]        = useState(null);
+  const [searchInput,    setSearchInput]    = useState("");
+  const [search,         setSearch]         = useState("");
+  const [page,           setPage]           = useState(0);
+  const [totalCount,     setTotalCount]     = useState(0);
+  const [viewMode,       setViewMode]       = useState("list");
+  const [stats,          setStats]          = useState({total:0,enabled:0,disabled:0});
+  const [priorityFilter, setPriorityFilter] = useState("all"); // "all" | "on" | "off"
   const searchRef = useRef();
 
   const showToast = useCallback((msg,type="success")=>{
@@ -186,63 +171,47 @@ export default function AgencyClients() {
     setTimeout(()=>setToast(null),3200);
   },[]);
 
-  /* ── debounce ── */
+  /* ── debounce search ── */
   useEffect(()=>{
     const t=setTimeout(()=>{setSearch(searchInput);setPage(0);},380);
     return ()=>clearTimeout(t);
   },[searchInput]);
 
-  /* ══════════════════════════════════════════
-     FETCH AGENCY NAMES
-     my_agent_id is a plain ObjectId string on _User.
-     Batch-fetch all unique agent records in one query.
-  ══════════════════════════════════════════ */
-  const enrichWithAgencyNames = useCallback(async(userList) => {
-    // collect unique non-null agent IDs
-    const agentIds = [...new Set(
-      userList.map(u=>u.myAgentId).filter(Boolean)
-    )];
-    if (!agentIds.length) return userList;
-
+  /* ── enrich with agency names ── */
+  const enrichWithAgencyNames = useCallback(async(userList)=>{
+    const agentIds=[...new Set(userList.map(u=>u.myAgentId).filter(Boolean))];
+    if(!agentIds.length) return userList;
     setAgencyLoading(true);
-    try {
-      const q = new Parse.Query("_User");
-      q.containedIn("objectId", agentIds);
+    try{
+      const q=new Parse.Query("_User");
+      q.containedIn("objectId",agentIds);
       q.select(["agency_name"]);
-      q.limit(agentIds.length + 10);
-      const agents = await q.find({ useMasterKey:true });
-
-      // build objectId → agency_name map
-      const nameMap = {};
-      agents.forEach(a => { nameMap[a.id] = a.get("agency_name") || null; });
-
-      return userList.map(u => ({
-        ...u,
-        agencyName: u.myAgentId ? (nameMap[u.myAgentId] || null) : null,
-      }));
-    } catch(e) {
-      console.error("Agency name fetch failed:", e.message);
-      return userList;
-    } finally {
-      setAgencyLoading(false);
-    }
+      q.limit(agentIds.length+10);
+      const agents=await q.find({useMasterKey:true});
+      const nameMap={};
+      agents.forEach(a=>{nameMap[a.id]=a.get("agency_name")||null;});
+      return userList.map(u=>({...u,agencyName:u.myAgentId?(nameMap[u.myAgentId]||null):null}));
+    }catch(e){console.error("Agency name fetch failed:",e.message);return userList;}
+    finally{setAgencyLoading(false);}
   },[]);
 
   /* ── fetch users ── */
-  const fetchUsers = useCallback(async(pg=0, srch="") => {
+  const fetchUsers = useCallback(async(pg=0,srch="",pf="all")=>{
     setLoading(true);
-    try {
-      const mk   = {useMasterKey:true};
-      const trim = srch.trim();
+    try{
+      const mk={useMasterKey:true};
+      const trim=srch.trim();
 
-      const buildQ = () => {
-        const q = new Parse.Query("_User");
+      const buildQ=()=>{
+        const q=new Parse.Query("_User");
         q.equalTo("agency_role","agency_client");
-        if (trim) {
+        if(trim){
           const n=parseInt(trim);
-          if (!isNaN(n)) q.equalTo("uid",n);
-          else           q.contains("username",trim);
+          if(!isNaN(n)) q.equalTo("uid",n);
+          else          q.contains("username",trim);
         }
+        if(pf==="on")  q.equalTo("Room_priority",true);
+        if(pf==="off") q.notEqualTo("Room_priority",true);
         return q;
       };
 
@@ -253,36 +222,38 @@ export default function AgencyClients() {
 
       const cq=buildQ();
 
-      /* stats query (always unfiltered) */
+      /* unfiltered stats */
       const allQ=new Parse.Query("_User");
       allQ.equalTo("agency_role","agency_client");
       allQ.limit(2000);
 
-      const [results, count, allUsers] = await Promise.all([
-        dq.find(mk), cq.count(mk), allQ.find(mk)
-      ]);
+      const [results,count,allUsers]=await Promise.all([dq.find(mk),cq.count(mk),allQ.find(mk)]);
 
       setTotalCount(count);
-
-      // stats
       const enabled=allUsers.filter(u=>u.get("Room_priority")===true).length;
-      setStats({total:allUsers.length, enabled, disabled:allUsers.length-enabled});
+      setStats({total:allUsers.length,enabled,disabled:allUsers.length-enabled});
 
-      // map and enrich with agency names
-      const mapped = results.map(mapUser);
-      const enriched = await enrichWithAgencyNames(mapped);
+      const mapped=results.map(mapUser);
+      const enriched=await enrichWithAgencyNames(mapped);
       setUsers(enriched);
-    } catch(e) {
-      showToast("Fetch failed: "+e.message,"error");
-    } finally {
-      setLoading(false);
-    }
-  },[showToast, enrichWithAgencyNames]);
+    }catch(e){showToast("Fetch failed: "+e.message,"error");}
+    finally{setLoading(false);}
+  },[showToast,enrichWithAgencyNames]);
 
-  useEffect(()=>{fetchUsers(0,"");},[fetchUsers]);
-  useEffect(()=>{fetchUsers(page,search);},[page,search]);
+  /* initial load */
+  useEffect(()=>{fetchUsers(0,"","all");},[fetchUsers]);
+
+  /* re-fetch when page/search/filter changes */
+  useEffect(()=>{fetchUsers(page,search,priorityFilter);},[page,search,priorityFilter]);
 
   const totalPages=Math.ceil(totalCount/PAGE_SIZE)||1;
+
+  /* ── stat card click ── */
+  const handleStatClick=(filter)=>{
+    const next=priorityFilter===filter?"all":filter;
+    setPriorityFilter(next);
+    setPage(0);
+  };
 
   /* ── toggle confirm ── */
   const askToggle=(user)=>{
@@ -297,9 +268,9 @@ export default function AgencyClients() {
 
   const doToggle=async()=>{
     if(!confirm) return;
-    const {user}=confirm; const next=!user.roomPriority;
+    const{user}=confirm; const next=!user.roomPriority;
     setConfirm(null); setActionLoading(user.objectId);
-    try {
+    try{
       const mk={useMasterKey:true};
       const obj=await new Parse.Query("_User").get(user.objectId,mk);
       obj.set("Room_priority",next);
@@ -307,13 +278,18 @@ export default function AgencyClients() {
       setUsers(prev=>prev.map(u=>u.objectId===user.objectId?{...u,roomPriority:next}:u));
       setStats(s=>({...s,enabled:s.enabled+(next?1:-1),disabled:s.disabled+(next?-1:1)}));
       showToast(`Room Priority ${next?"enabled":"disabled"} for @${user.username}`);
-    } catch(e){showToast("Update failed: "+e.message,"error");}
+    }catch(e){showToast("Update failed: "+e.message,"error");}
     finally{setActionLoading(null);}
   };
 
-  /* ══════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════ */
+  /* ── stat card config ── */
+  const STAT_CARDS=[
+    {label:"Total Clients",value:stats.total,   color:"#60a5fa",glow:"rgba(96,165,250,0.15)",  rgb:"96,165,250",  icon:"👥",filter:"all"},
+    {label:"Priority ON",  value:stats.enabled, color:"#34d399",glow:"rgba(52,211,153,0.15)",  rgb:"52,211,153",  icon:"🟢",filter:"on"},
+    {label:"Priority OFF", value:stats.disabled,color:"#94a3b8",glow:"rgba(148,163,184,0.12)", rgb:"148,163,184", icon:"⚫",filter:"off"},
+  ];
+
+  /* ══════ RENDER ══════ */
   return (
     <div className="min-h-screen text-slate-200"
       style={{background:"#060c18",fontFamily:"'Inter',-apple-system,sans-serif"}}>
@@ -341,37 +317,72 @@ export default function AgencyClients() {
               </span>
               Top Streams
             </h1>
-            <p className="text-sm text-slate-500 mt-1 font-mono">
-              <code className="text-emerald-400/80 bg-emerald-500/10 px-1.5 py-0.5 rounded text-xs">agency_role = agency_client</code>
-            </p>
+
           </div>
-          <button onClick={()=>fetchUsers(page,search)} disabled={loading||agencyLoading}
+          <button onClick={()=>fetchUsers(page,search,priorityFilter)} disabled={loading||agencyLoading}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-400 text-xs font-bold hover:text-white hover:bg-white/10 transition-all disabled:opacity-40">
             <span style={{display:"inline-block",animation:(loading||agencyLoading)?"spin .8s linear infinite":"none"}}>↻</span>
             Refresh
           </button>
         </div>
 
-        {/* ── STATS ── */}
+        {/* ── STAT CARDS (clickable filter) ── */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[
-            {label:"Total Clients",value:stats.total,   color:"#60a5fa",glow:"rgba(96,165,250,0.15)",   icon:"👥"},
-            {label:"Priority ON",  value:stats.enabled, color:"#34d399",glow:"rgba(52,211,153,0.15)",   icon:"🟢"},
-            {label:"Priority OFF", value:stats.disabled,color:"#94a3b8",glow:"rgba(148,163,184,0.12)",  icon:"⚫"},
-          ].map(s=>(
-            <div key={s.label} className="rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all hover:-translate-y-0.5"
-              style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",boxShadow:`inset 0 0 30px ${s.glow}`}}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
-                style={{background:s.glow,border:`1px solid ${s.color}30`}}>
-                {s.icon}
+          {STAT_CARDS.map(s=>{
+            const isActive=priorityFilter===s.filter;
+            return(
+              <div key={s.label}
+                onClick={()=>handleStatClick(s.filter)}
+                className="rounded-2xl p-4 sm:p-5 flex items-center gap-3 sm:gap-4 transition-all cursor-pointer select-none"
+                style={{
+                  background: isActive?`rgba(${s.rgb},0.08)`:"rgba(255,255,255,0.03)",
+                  border:`1.5px solid ${isActive?s.color+"55":"rgba(255,255,255,0.07)"}`,
+                  boxShadow: isActive
+                    ?`inset 0 0 30px ${s.glow}, 0 0 0 1px ${s.color}15`
+                    :`inset 0 0 30px ${s.glow}`,
+                  transform: isActive?"translateY(-2px)":"",
+                }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0"
+                  style={{background:s.glow,border:`1px solid ${s.color}30`}}>
+                  {s.icon}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xl sm:text-2xl font-black tabular-nums" style={{color:s.color}}>
+                    {s.value.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                    {s.label}
+                  </div>
+                </div>
+                {isActive&&(
+                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+                    style={{background:s.color,color:"#000"}}>
+                    ✓
+                  </div>
+                )}
               </div>
-              <div>
-                <div className="text-2xl font-black tabular-nums" style={{color:s.color}}>{s.value.toLocaleString()}</div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">{s.label}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        {/* ── ACTIVE FILTER PILL ── */}
+        {priorityFilter!=="all"&&(
+          <div className="flex items-center gap-2 -mt-2">
+            <span className="text-xs text-slate-600">Filtering by:</span>
+            <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full"
+              style={{
+                background: priorityFilter==="on"?"rgba(52,211,153,0.12)":"rgba(148,163,184,0.1)",
+                border:`1px solid ${priorityFilter==="on"?"rgba(52,211,153,0.3)":"rgba(148,163,184,0.2)"}`,
+                color: priorityFilter==="on"?"#34d399":"#94a3b8",
+              }}>
+              {priorityFilter==="on"?"🟢 Priority ON":"⚫ Priority OFF"}
+            </span>
+            <button onClick={()=>{setPriorityFilter("all");setPage(0);}}
+              className="text-xs text-slate-600 hover:text-slate-300 transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
+              ✕ Clear
+            </button>
+          </div>
+        )}
 
         {/* ── TOOLBAR ── */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -409,7 +420,7 @@ export default function AgencyClients() {
         </div>
 
         {/* ── CONTENT ── */}
-        {loading ? (
+        {loading?(
           <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-500">
             <div className="relative w-12 h-12">
               <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-500" style={{animation:"spin .9s linear infinite"}}/>
@@ -418,17 +429,24 @@ export default function AgencyClients() {
             <p className="text-sm">Loading clients…</p>
           </div>
 
-        ) : users.length===0 ? (
+        ):users.length===0?(
           <div className="flex flex-col items-center gap-3 py-24 text-slate-500">
             <div className="text-5xl opacity-20">🏢</div>
-            <p className="text-sm">{search?`No clients match "${search}"`:"No agency clients found"}</p>
-            {search&&<button onClick={()=>{setSearchInput("");setSearch("");setPage(0);}}
-              className="text-xs px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white transition-all">
-              Clear search
-            </button>}
+            <p className="text-sm">
+              {priorityFilter==="on"?"No clients with Priority ON"
+               :priorityFilter==="off"?"No clients with Priority OFF"
+               :search?`No clients match "${search}"`
+               :"No agency clients found"}
+            </p>
+            {(search||priorityFilter!=="all")&&(
+              <button onClick={()=>{setSearchInput("");setSearch("");setPriorityFilter("all");setPage(0);}}
+                className="text-xs px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:text-white transition-all">
+                Clear filters
+              </button>
+            )}
           </div>
 
-        ) : viewMode==="card" ? (
+        ):viewMode==="card"?(
 
           /* ═══ CARD VIEW ═══ */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -453,12 +471,10 @@ export default function AgencyClients() {
                     </span>
                   )}
                 </div>
-
-                {/* info grid */}
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    {l:"UID",      v:user.uid,                      mono:true},
-                    {l:"ObjectId", v:user.objectId.slice(0,10)+"…", mono:true},
+                    {l:"UID",v:user.uid,mono:true},
+                    {l:"ObjectId",v:user.objectId.slice(0,10)+"…",mono:true},
                   ].map(item=>(
                     <div key={item.l} className="rounded-xl px-3 py-2"
                       style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)"}}>
@@ -467,8 +483,6 @@ export default function AgencyClients() {
                     </div>
                   ))}
                 </div>
-
-                {/* Agency name */}
                 <div className="rounded-xl px-3 py-2"
                   style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)"}}>
                   <div className="text-[9px] text-slate-600 font-bold uppercase tracking-wider mb-1">Agency</div>
@@ -477,7 +491,6 @@ export default function AgencyClients() {
                     :<AgencyBadge name={user.agencyName}/>
                   }
                 </div>
-
                 <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
                   <span className="text-xs text-slate-500 font-semibold">Room Priority</span>
                   <PriorityToggle user={user} onToggle={askToggle} loading={actionLoading}/>
@@ -486,11 +499,10 @@ export default function AgencyClients() {
             ))}
           </div>
 
-        ) : (
+        ):(
 
           /* ═══ LIST VIEW ═══ */
           <div className="rounded-2xl overflow-hidden" style={{border:"1px solid rgba(255,255,255,0.07)"}}>
-            {/* header row */}
             <div className="hidden sm:grid px-4 py-2.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest"
               style={{
                 gridTemplateColumns:"40px 1fr 90px 1fr 130px 140px",
@@ -505,20 +517,15 @@ export default function AgencyClients() {
 
             {users.map((user,i)=>(
               <div key={user.objectId}
-                className={`flex sm:grid items-center px-4 py-3.5 border-b border-white/[0.04] transition-colors gap-3
-                  hover:bg-white/[0.025] ${user.roomPriority?"bg-emerald-500/[0.025]":""}`}
+                className={`flex sm:grid items-center px-4 py-3.5 border-b border-white/[0.04] transition-colors gap-3 hover:bg-white/[0.025] ${user.roomPriority?"bg-emerald-500/[0.025]":""}`}
                 style={{
                   gridTemplateColumns:"40px 1fr 90px 1fr 130px 140px",
                   gap:"12px",
                   animation:`fadeUp .2s ease ${i*14}ms both`,
                 }}>
 
-                {/* avatar */}
-                <div className="shrink-0">
-                  <UserAvatar user={user} size={36}/>
-                </div>
+                <div className="shrink-0"><UserAvatar user={user} size={36}/></div>
 
-                {/* name */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-white text-sm truncate max-w-[160px]">{user.name}</span>
@@ -532,7 +539,6 @@ export default function AgencyClients() {
                   <span className="text-[11px] text-slate-500 font-mono">@{user.username}</span>
                 </div>
 
-                {/* UID */}
                 <div className="hidden sm:block">
                   <span className="font-mono text-xs text-slate-400 px-2 py-1 rounded-lg"
                     style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
@@ -540,15 +546,13 @@ export default function AgencyClients() {
                   </span>
                 </div>
 
-                {/* ── AGENCY NAME COLUMN ── */}
                 <div className="hidden sm:block min-w-0">
                   {agencyLoading&&!user.agencyName
-                    ? <span className="inline-block w-24 h-5 rounded-lg animate-pulse" style={{background:"rgba(255,255,255,0.07)"}}/>
-                    : <AgencyBadge name={user.agencyName}/>
+                    ?<span className="inline-block w-24 h-5 rounded-lg animate-pulse" style={{background:"rgba(255,255,255,0.07)"}}/>
+                    :<AgencyBadge name={user.agencyName}/>
                   }
                 </div>
 
-                {/* room priority status */}
                 <div className="hidden sm:block">
                   <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-bold
                     ${user.roomPriority
@@ -559,7 +563,6 @@ export default function AgencyClients() {
                   </span>
                 </div>
 
-                {/* action */}
                 <div className="sm:flex sm:justify-end">
                   <PriorityToggle user={user} onToggle={askToggle} loading={actionLoading}/>
                 </div>
