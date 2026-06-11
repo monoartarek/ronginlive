@@ -118,6 +118,7 @@ const FullPageOverlay = ({ agent, members, membersLoading, onClose, showToast })
   const [editName,  setEditName]  = useState(false);
   const [agencyName,setAgencyName]= useState(agent.get('agency_name') || '');
   const [removing,  setRemoving]  = useState(null);
+  const [hostsList, setHostsList] = useState([]);
   const { copied, copy } = useCopy();
 
   useEffect(() => {
@@ -125,6 +126,11 @@ const FullPageOverlay = ({ agent, members, membersLoading, onClose, showToast })
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
+
+  // Sync local hosts list with the members prop (initial load or refresh)
+useEffect(() => {
+  setHostsList(members);
+}, [members]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -180,18 +186,48 @@ const FullPageOverlay = ({ agent, members, membersLoading, onClose, showToast })
     } catch (e) { showToast('Error: ' + e.message, 'error'); }
   };
 
-  const doRemoveHost = async (hostId, hostUid) => {
-    setRemoving(hostId);
-    try {
-      const hq = new Parse.Query('_User');
-      const h  = await hq.get(hostId, { useMasterKey: true });
-      h.set('agency_role', ''); h.set('my_agent_id', '');
-      await h.save(null, { useMasterKey: true });
-      showToast(`Host #${hostUid} removed!`);
-    } catch (e) { showToast('Error: ' + e.message, 'error'); }
-    finally { setRemoving(null); }
-  };
+const doRemoveHost = async (hostId, hostUid) => {
+  setRemoving(hostId);
+  try {
+    console.log('Removing host with objectId:', hostId);
 
+    // 1. Fetch the host user
+    const hq = new Parse.Query('_User');
+    const host = await hq.get(hostId, { useMasterKey: true });
+    console.log('Host found:', host.id);
+
+    // 2. Clear agency fields (set to empty string – same as PHP)
+    host.set('agency_role', '');
+    host.set('my_agent_id', '');
+    await host.save(null, { useMasterKey: true });
+    console.log('Host fields cleared');
+
+    // 3. Delete AgencyMember records where host_id = host.id
+    const memberQuery = new Parse.Query('AgencyMember');
+    memberQuery.equalTo('host_id', host.id);
+    const membersToDelete = await memberQuery.find({ useMasterKey: true });
+    if (membersToDelete.length) {
+      await Parse.Object.destroyAll(membersToDelete, { useMasterKey: true });
+      console.log(`Deleted ${membersToDelete.length} AgencyMember record(s)`);
+    }
+
+    // 4. Delete AgencyInvitation records where host_id = host.id
+    const inviteQuery = new Parse.Query('AgencyInvitation');
+    inviteQuery.equalTo('host_id', host.id);
+    const invitesToDelete = await inviteQuery.find({ useMasterKey: true });
+    if (invitesToDelete.length) {
+      await Parse.Object.destroyAll(invitesToDelete, { useMasterKey: true });
+      console.log(`Deleted ${invitesToDelete.length} AgencyInvitation record(s)`);
+    }
+
+    showToast(`Host #${hostUid} removed!`);
+  } catch (e) {
+    console.error('Remove host error:', e);
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    setRemoving(null);
+  }
+};
   const removeAgency = async () => {
     if (!window.confirm('Remove this agency and unlink all hosts?')) return;
     try {
@@ -202,8 +238,6 @@ const FullPageOverlay = ({ agent, members, membersLoading, onClose, showToast })
     } catch (e) { showToast('Error: ' + e.message, 'error'); }
   };
 
-
-  // ==============================pdf start ==================================
   const exportPDF = async () => {
   try {
     const doc   = new jsPDF('l', 'mm', 'a4');
@@ -606,9 +640,6 @@ const FullPageOverlay = ({ agent, members, membersLoading, onClose, showToast })
     showToast('PDF failed: ' + e.message, 'error');
   }
 };
-
-// ==============================pdf end ==================================
-
 
   const exportCSV = () => {
     const rows = sorted.map(m => [

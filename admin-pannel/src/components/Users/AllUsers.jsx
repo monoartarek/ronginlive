@@ -119,6 +119,7 @@ function mapUser(u) {
     email:                       u.get("email") || "—",
     birthday:                    u.get("birthday") || null,
     device_id:                   u.get("device_id") || null,
+    device_fingerprint:          u.get("device_fingerprint") || null,
     is_banned:                   !!u.get("is_banned"),
     avatar:                      avatarUrl,
     createdAt:                   u.get("createdAt"),
@@ -414,6 +415,7 @@ function ViewModal({ user, devBan, onClose, onEdit, showToast, onToggleBan, onTo
               <FieldRow label="Agency Role" value={user.agency_role} />
               <FieldRow label="Last Online" value={timeAgo(user.lastOnline)} />
               <FieldRow label="Device ID"   value={user.device_id} mono onClick={user.device_id?()=>copyText(user.device_id,showToast):null} />
+              <FieldRow label="Fingerprint" value={user.device_fingerprint} mono onClick={user.device_fingerprint ? () => copyText(user.device_fingerprint, showToast) : null} />
               <FieldRow label="Object ID"   value={user.objectId}  mono onClick={() => copyText(user.objectId, showToast)} />
             </div>
           </div>
@@ -1449,27 +1451,36 @@ export default function AllUsers() {
     finally { setActionLoading(null); }
   },[showToast,fetchStatCounts]);
 
-  const toggleDeviceBan = useCallback(async (user) => {
-    if (!user.device_id) { showToast("No device ID","error"); return; }
-    setConfirmModal(null); setActionLoading(`dev_${user.objectId}`);
-    try {
-      const mk={useMasterKey:true};
-      const bq=new Parse.Query("BannedDevices"); bq.equalTo("device_id",user.device_id);
-      const existing=await bq.first(mk);
-      let ns;
-      if (existing) {
-        ns=!existing.get("status"); existing.set("status",ns); await existing.save(null,mk);
-        setDeviceBanMap(p=>({...p,[user.objectId]:{hasBan:true,status:ns,banObjId:existing.id}}));
-      } else {
-        const Ban=Parse.Object.extend("BannedDevices"); const nb=new Ban();
-        nb.set("device_id",user.device_id); nb.set("auther_id",user.objectId); nb.set("status",true);
-        await nb.save(null,mk); ns=true;
-        setDeviceBanMap(p=>({...p,[user.objectId]:{hasBan:true,status:true,banObjId:nb.id}}));
-      }
-      showToast(`Device ${ns?"banned":"unbanned"} for ${user.username}`,ns?"info":"success");
-    } catch(e) { showToast("Device ban failed: "+e.message,"error"); }
-    finally { setActionLoading(null); }
-  },[showToast]);
+const toggleDeviceBan = useCallback(async (user) => {
+  if (!user.device_id) { showToast("No device ID","error"); return; }
+  setConfirmModal(null); setActionLoading(`dev_${user.objectId}`);
+  try {
+    const mk = { useMasterKey: true };
+    const bq = new Parse.Query("BannedDevices"); bq.equalTo("device_id", user.device_id);
+    const existing = await bq.first(mk);
+    let ns;
+    if (existing) {
+      ns = !existing.get("status");
+      existing.set("status", ns);
+      // ── update fingerprint (keep it fresh) ──
+      existing.set("device_fingerprint", user.device_fingerprint || "");
+      await existing.save(null, mk);
+      setDeviceBanMap(p => ({...p, [user.objectId]: { hasBan: true, status: ns, banObjId: existing.id }}));
+    } else {
+      const Ban = Parse.Object.extend("BannedDevices"); const nb = new Ban();
+      nb.set("device_id", user.device_id);
+      nb.set("auther_id", user.objectId);
+      nb.set("status", true);
+      // ── store fingerprint on creation ──
+      nb.set("device_fingerprint", user.device_fingerprint || "");
+      await nb.save(null, mk);
+      ns = true;
+      setDeviceBanMap(p => ({...p, [user.objectId]: { hasBan: true, status: true, banObjId: nb.id }}));
+    }
+    showToast(`Device ${ns ? "banned" : "unbanned"} for ${user.username}`, ns ? "info" : "success");
+  } catch(e) { showToast("Device ban failed: " + e.message, "error"); }
+  finally { setActionLoading(null); }
+}, [showToast]);
 
   const toggleSuspend = useCallback(async (user) => {
     const ns=user.status==="suspended"?"active":"suspended";

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Parse from "../../parseConfig";
 import "./AppSettings.css";
+import PhoneSizePicker from "./Phonesizepicker";
 
 /* ═══════════════════════════════════════════════════
    Parse class: AppSettings (single record)
@@ -110,20 +111,18 @@ function MediaCard({ label, hint, fileObj, fieldKey, onUpload, uploading }) {
 }
 
 /* ── Game row / card ── */
-function GameCard({ game, idx, total, onChange, onDelete, onMoveUp, onMoveDown }) {
+function GameCard({ game, idx, total, onChange, onDelete, onMoveUp, onMoveDown, onSizePick }) {
   const imgUrl = game.image || "";
+  const gameSize = game.size ?? 1;
   return (
     <div className={`as-game ${game.active ? "" : "as-game--inactive"}`}>
       <div className="as-game-top">
-        {/* Game image preview */}
         <div className="as-game-thumb">
           {imgUrl
             ? <img src={imgUrl} alt={game.name} className="as-game-thumb-img" />
             : <div className="as-game-thumb-ph">🎮</div>
           }
         </div>
-
-        {/* ID + Status */}
         <div className="as-game-id-col">
           <span className="as-game-id">#{game.id}</span>
           <button
@@ -132,15 +131,55 @@ function GameCard({ game, idx, total, onChange, onDelete, onMoveUp, onMoveDown }
             {game.active ? "● Active" : "○ Off"}
           </button>
         </div>
-
-        {/* Move + Delete */}
         <div className="as-game-order">
           <button className="as-icon-btn" disabled={idx === 0} onClick={() => onMoveUp(idx)} title="Move up">↑</button>
           <button className="as-icon-btn" disabled={idx === total - 1} onClick={() => onMoveDown(idx)} title="Move down">↓</button>
+          <button
+            className="as-icon-btn"
+            onClick={() => onSizePick(idx)}
+            title={`Screen size: ${Math.round(gameSize * 100)}%`}
+            style={{
+              width: "50%",
+              borderRadius: 10,
+              fontSize: 11,
+              fontWeight: 900,
+              color: "white",
+              letterSpacing: "0.03em",
+              background: "rgba(99,102,241,0.08)",
+              border: "2px solid transparent",
+              backgroundImage: `
+                linear-gradient(rgba(99,102,241,0.08), rgba(99,102,241,0.08)),
+                conic-gradient(from var(--angle,0deg),
+                  #6366f1, #f59e0b, #10b981, #f43f5e, #06b6d4, #a855f7, #6366f1)
+              `,
+              backgroundOrigin: "border-box",
+              animation: "borderSpin 2.5s linear infinite",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 0,
+              transition: "transform .15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.02)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+          >
+            <span style={{ fontSize: 13 }}></span>
+            <span>View:</span>
+            <span style={{
+              borderRadius: 20,
+              background: "rgba(99,102,241,0.2)",
+              border: "1px solid rgba(99,102,241,0.4)",
+              fontSize: 10,
+              fontWeight: 900,
+              color: "white",
+            }}>
+              {Math.round(gameSize * 100)}%
+            </span>
+          </button>
           <button className="as-icon-btn as-icon-btn--red" onClick={() => onDelete(idx)} title="Delete">🗑</button>
         </div>
       </div>
-
       <div className="as-game-fields">
         <div className="as-game-row">
           <div className="as-game-field">
@@ -149,22 +188,21 @@ function GameCard({ game, idx, total, onChange, onDelete, onMoveUp, onMoveDown }
               onChange={e => onChange(idx, "name", e.target.value)}
               placeholder="Game name" />
           </div>
-            <div className="as-game-field">
-              <label className="as-game-field-label">Company</label>
-
-              <select
-                className="as-game-input"
-                value={game.company || ""}
-                onChange={(e) => onChange(idx, "company", e.target.value)}
-              >
-                <option value="">Select Company</option>
-                <option value="dell">dell</option>
-                <option value="baisun">baisun</option>
-                <option value="sud">sud</option>
-                <option value="bytesun">bytesun</option>
-                <option value="joysdk">joysdk</option>
-              </select>
-            </div>
+          <div className="as-game-field">
+            <label className="as-game-field-label">Company</label>
+            <select
+              className="as-game-input"
+              value={game.company || ""}
+              onChange={(e) => onChange(idx, "company", e.target.value)}
+            >
+              <option value="">Select Company</option>
+              <option value="dell">dell</option>
+              <option value="baisun">baisun</option>
+              <option value="sud">sud</option>
+              <option value="bytesun">bytesun</option>
+              <option value="joysdk">joysdk</option>
+            </select>
+          </div>
         </div>
         <div className="as-game-field">
           <label className="as-game-field-label">Image URL</label>
@@ -188,85 +226,77 @@ function GameCard({ game, idx, total, onChange, onDelete, onMoveUp, onMoveDown }
 ══════════════════════════════════════════════════ */
 export default function AppSettings() {
 
-  const [record,          setRecord]          = useState(null);
-  const [loading,         setLoading]         = useState(true);
-  const [saving,          setSaving]          = useState(false);
-  const [uploading,       setUploading]       = useState(null);
-  const [toast,           setToast]           = useState(null);
-  const [tab,             setTab]             = useState("general");
-  const [showCreds,       setShowCreds]       = useState(false);
-  const [unsaved,         setUnsaved]         = useState(false);
+  const [record, setRecord] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [tab, setTab] = useState("general");
+  const [unsaved, setUnsaved] = useState(false);
+  const [sizePicker, setSizePicker] = useState(null);
 
   /* form state */
-  const [appVersion,       setAppVersion]       = useState("");
-  const [appLogo,          setAppLogo]          = useState(null);
-  const [audioBg,          setAudioBg]          = useState(null);
-  const [games,            setGames]            = useState([]);
-  const [agoraList,        setAgoraList]        = useState([]); //lastly added for multiple agora support, will be saved as  array of objects [{appId, certificate}]
+  const [appVersion, setAppVersion] = useState("");
+  const [appLogo, setAppLogo] = useState(null);
+  const [audioBg, setAudioBg] = useState(null);
+  const [audioSeat, setAudioSeat] = useState(null);
+  const [multiBg, setMultiBg] = useState(null);
+  const [games, setGames] = useState([]);
+  // Agora fields - using exact Parse column names: AgoraAppID and AgoraAppCertificate
+  const [agoraAppId, setAgoraAppId] = useState("");
+  const [agoraAppCertificate, setAgoraAppCertificate] = useState("");
 
-    const agoraChange = (i, key, value) => {
-      setAgoraList(list =>
-        list.map((item, idx) =>
-          idx === i ? { ...item, [key]: value } : item
-        )
-      );
-    };
+  const initialized = useRef(false);
 
-    const addAgora = () => {
-      setAgoraList(list => [
-        ...list,
-        { id: Date.now(), appId: "", certificate: "" }
-      ]);
-    };
-
-    const deleteAgora = (i) => {
-      setAgoraList(list => list.filter((_, idx) => idx !== i));
-    };
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  /* ── Load ── */
+  /* ── Load settings from Parse ── */
   useEffect(() => {
     (async () => {
       try {
         const q = new Parse.Query("AppSettings");
         const obj = await q.first({ useMasterKey: true });
-        if (!obj) { showToast("No AppSettings found", "error"); setLoading(false); return; }
+        if (!obj) { 
+          showToast("No AppSettings found", "error"); 
+          setLoading(false); 
+          return; 
+        }
         setRecord(obj);
         setAppVersion(obj.get("appVersion") || "");
-        const credentials = obj.get("AgoraCredentials");
-
-        setAgoraList(
-          credentials && credentials.length
-            ? credentials
-            : [
-                {
-                  id: Date.now(),
-                  appId: obj.get("AgoraAppID") || "",
-                  certificate: obj.get("AgoraAppCertificate") || ""
-                }
-              ]
-        );
+        // FIXED: Use correct field name "AgoraAppID" (capital D)
+        setAgoraAppId(obj.get("AgoraAppID") || "");
+        setAgoraAppCertificate(obj.get("AgoraAppCertificate") || "");
         setAppLogo(obj.get("appLogo") || null);
         setAudioBg(obj.get("audiobg") || null);
-        setGames(JSON.parse(JSON.stringify(obj.get("AllGames") || [])));
+        setAudioSeat(obj.get("audio_seat") || null);
+        setMultiBg(obj.get("multibg") || null);
+        
+        const loadedGames = (obj.get("AllGames") || []).map(g => ({
+          ...g,
+          size: g.size ?? 1,
+          active: g.active ?? true,
+        }));
+        setGames(loadedGames);
+        
         setTimeout(() => { initialized.current = true; }, 100);
-      } catch (e) { showToast("Load failed: " + e.message, "error"); }
-      finally { setLoading(false); }
+      } catch (e) { 
+        showToast("Load failed: " + e.message, "error"); 
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [showToast]);
-
-  const initialized = useRef(false);
 
   /* mark unsaved only after initial load */
   useEffect(() => {
     if (!initialized.current) return;
     setUnsaved(true);
-  }, [appVersion, agoraList, appLogo, audioBg, games]);
+  }, [appVersion, agoraAppId, agoraAppCertificate, appLogo, audioBg, audioSeat, multiBg, games]);
 
-  /* ── Upload ── */
+  /* ── File upload handler ── */
   const handleUpload = async (field, file) => {
     setUploading(field);
     try {
@@ -274,68 +304,100 @@ export default function AppSettings() {
       await pf.save({ useMasterKey: true });
       if (field === "appLogo") setAppLogo(pf);
       if (field === "audiobg") setAudioBg(pf);
+      if (field === "audio_seat") setAudioSeat(pf);
+      if (field === "multibg") setMultiBg(pf);
       showToast("File uploaded ✓", "success");
-    } catch (e) { showToast("Upload failed: " + e.message, "error"); }
-    finally { setUploading(null); }
+    } catch (e) { 
+      showToast("Upload failed: " + e.message, "error"); 
+    } finally {
+      setUploading(null);
+    }
   };
 
-  /* ── Save ── */
+  /* ── Save all settings to Parse ── */
   const handleSave = async () => {
     if (!record) return;
     setSaving(true);
     try {
-      record.set("appVersion",          appVersion.trim());
-      record.set("AgoraCredentials", agoraList);
+      record.set("appVersion", appVersion.trim());
+      // FIXED: Use correct field name "AgoraAppID"
+      record.set("AgoraAppID", agoraAppId);
+      record.set("AgoraAppCertificate", agoraAppCertificate);
       if (appLogo) record.set("appLogo", appLogo);
       if (audioBg) record.set("audiobg", audioBg);
+      if (audioSeat) record.set("audio_seat", audioSeat);
+      if (multiBg) record.set("multibg", multiBg);
       record.set("AllGames", games);
       await record.save(null, { useMasterKey: true });
       setUnsaved(false);
       initialized.current = true;
       showToast("Settings saved successfully ✓", "success");
-    } catch (e) { showToast("Save failed: " + e.message, "error"); }
-    finally { setSaving(false); }
+    } catch (e) { 
+      showToast("Save failed: " + e.message, "error"); 
+    } finally {
+      setSaving(false);
+    }
   };
 
-  /* ── Reset ── */
+  /* ── Reset to last saved values ── */
   const handleReset = () => {
     if (!record) return;
     initialized.current = false;
     setAppVersion(record.get("appVersion") || "");
-    setAgoraList(
-      record.get("AgoraCredentials") || [
-        {
-          id: Date.now(),
-          appId: "",
-          certificate: ""
-        }
-      ]
-    );
+    setAgoraAppId(record.get("AgoraAppID") || "");
+    setAgoraAppCertificate(record.get("AgoraAppCertificate") || "");
     setAppLogo(record.get("appLogo") || null);
     setAudioBg(record.get("audiobg") || null);
-    setGames(JSON.parse(JSON.stringify(record.get("AllGames") || [])));
+    setAudioSeat(record.get("audio_seat") || null);
+    setMultiBg(record.get("multibg") || null);
+    const resetGames = (record.get("AllGames") || []).map(g => ({
+      ...g,
+      size: g.size ?? 1,
+      active: g.active ?? true,
+    }));
+    setGames(resetGames);
     setUnsaved(false);
     setTimeout(() => { initialized.current = true; }, 100);
     showToast("Reset to saved values", "info");
   };
 
-  /* ── Games ── */
+  /* ── Game management helpers ── */
   const gameChange = (i, key, val) => setGames(g => g.map((x, j) => j === i ? { ...x, [key]: val } : x));
-  const gameDelete = (i) => { setGames(g => g.filter((_, j) => j !== i)); showToast("Game removed (save to apply)", "info"); };
+  const gameDelete = (i) => { 
+    setGames(g => g.filter((_, j) => j !== i)); 
+    showToast("Game removed (save to apply)", "info"); 
+  };
   const gameMoveUp = (i) => {
     if (i === 0) return;
-    setGames(g => { const a = [...g]; [a[i-1], a[i]] = [a[i], a[i-1]]; return a; });
+    setGames(g => { 
+      const a = [...g]; 
+      [a[i-1], a[i]] = [a[i], a[i-1]]; 
+      return a; 
+    });
   };
   const gameMoveDown = (i) => {
-    setGames(g => { if (i >= g.length-1) return g; const a = [...g]; [a[i], a[i+1]] = [a[i+1], a[i]]; return a; });
+    setGames(g => { 
+      if (i >= g.length-1) return g; 
+      const a = [...g]; 
+      [a[i], a[i+1]] = [a[i+1], a[i]]; 
+      return a; 
+    });
   };
-  const gameAdd = () => setGames(g => [...g, { id: Date.now(), name: "", image: "", url: "", company: "", active: true }]);
+  const gameAdd = () => setGames(g => [...g, { 
+    id: Date.now(), 
+    name: "", 
+    image: "", 
+    url: "", 
+    company: "", 
+    active: true,
+    size: 1 
+  }]);
 
   const TABS = [
-    { key: "general", label: "General",  icon: "⚙" },
-    { key: "media",   label: "Media",    icon: "🖼" },
-    { key: "agora",   label: "Agora",    icon: "📡" },
-    { key: "games",   label: "Games",    icon: "🎮", count: games.length },
+    { key: "general", label: "General", icon: "⚙" },
+    { key: "media", label: "Media", icon: "🖼" },
+    { key: "agora", label: "Agora", icon: "📡" },
+    { key: "games", label: "Games", icon: "🎮", count: games.length },
   ];
 
   /* ════════════ RENDER ════════════ */
@@ -357,210 +419,219 @@ export default function AppSettings() {
   );
 
   return (
-    <div className="as-root">
-      <Toast toast={toast} />
+    <>
+      <div className="as-root">
+        <Toast toast={toast} />
 
-      {/* ── HEADER ── */}
-      <div className="as-header">
-        <div className="as-header-left">
-          <div className="as-header-icon">⚙</div>
-          <div>
-            <h1 className="as-title">App Settings</h1>
-            <p className="as-subtitle">Configure version, media, streaming &amp; games</p>
+        {/* ── HEADER ── */}
+        <div className="as-header">
+          <div className="as-header-left">
+            <div className="as-header-icon">⚙</div>
+            <div>
+              <h1 className="as-title">App Settings</h1>
+              <p className="as-subtitle">Configure version, media, streaming &amp; games</p>
+            </div>
           </div>
-        </div>
-        <div className="as-header-right">
-          {unsaved && <span className="as-unsaved-dot" title="Unsaved changes" />}
-          <div className="as-record-pill">
-            <span>ID:</span>
-            <code>{record.id}</code>
-          </div>
-          <button className="as-btn as-btn--ghost" onClick={handleReset} disabled={saving}>↺ Reset</button>
-          <button className="as-btn as-btn--primary" onClick={handleSave} disabled={saving}>
-            {saving ? <><span className="as-spin" /> Saving…</> : "💾 Save Changes"}
-          </button>
-        </div>
-      </div>
-
-      {/* ── TABS ── */}
-      <div className="as-tabs">
-        {TABS.map(t => (
-          <button key={t.key} className={`as-tab ${tab === t.key ? "on" : ""}`}
-            onClick={() => setTab(t.key)}>
-            <span className="as-tab-icon">{t.icon}</span>
-            {t.label}
-            {t.count !== undefined && <span className="as-tab-badge">{t.count}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* ── CONTENT ── */}
-      <div className="as-body">
-
-        {/* ══ GENERAL ══ */}
-        {tab === "general" && (
-          <Section icon="⚙" title="General" desc="Core app configuration and metadata">
-            <div className="as-fields">
-              <Field label="App Version" hint="Current version shown to users, used for forced update checks">
-                <Input value={appVersion} onChange={setAppVersion} placeholder="e.g. 1.03" />
-              </Field>
-              <Field label="Object ID" hint="Parse record identifier (read-only)">
-                <Input value={record.id} mono readOnly />
-              </Field>
-              <Field label="Last Updated" hint="When these settings were last saved">
-                <Input value={record.updatedAt ? new Date(record.updatedAt).toLocaleString() : "—"} mono readOnly />
-              </Field>
-              <Field label="Created At" hint="When this record was first created">
-                <Input value={record.createdAt ? new Date(record.createdAt).toLocaleString() : "—"} mono readOnly />
-              </Field>
+          <div className="as-header-right">
+            {unsaved && <span className="as-unsaved-dot" title="Unsaved changes" />}
+            <div className="as-record-pill">
+              <span>ID:</span>
+              <code>{record.id}</code>
             </div>
-
-            <div className="as-info-box">
-              <div className="as-info-box-icon">📱</div>
-              <div>
-                <strong>Current Version: {appVersion || "—"}</strong>
-                <p>The mobile app compares its installed version against this value to decide whether to prompt for an update.</p>
-              </div>
-            </div>
-          </Section>
-        )}
-
-        {/* ══ MEDIA ══ */}
-        {tab === "media" && (
-          <Section icon="🖼" title="Media Assets" desc="App logo and audio room background image">
-            <div className="as-media-grid">
-              <MediaCard
-                label="App Logo"
-                hint="Main logo shown in app header and splash screen"
-                fileObj={appLogo}
-                fieldKey="appLogo"
-                onUpload={handleUpload}
-                uploading={uploading}
-              />
-              <MediaCard
-                label="Audio Room Background"
-                hint="Background image shown in audio/voice rooms"
-                fileObj={audioBg}
-                fieldKey="audiobg"
-                onUpload={handleUpload}
-                uploading={uploading}
-              />
-            </div>
-          </Section>
-        )}
-
-        {/* ══ AGORA ══ */}
-        {tab === "agora" && (
-        <Section
-          icon="📡"
-          title="Agora Credentials"
-          desc="Manage multiple Agora projects like game cards"
-          action={
-            <button className="as-btn as-btn--primary" onClick={addAgora}>
-              + Add Credential
+            <button className="as-btn as-btn--ghost" onClick={handleReset} disabled={saving}>↺ Reset</button>
+            <button className="as-btn as-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving ? <><span className="as-spin" /> Saving…</> : "💾 Save Changes"}
             </button>
-          }
-        >
-          <div className="as-games-list">
-            {agoraList.map((item, idx) => (
-              <div key={item.id} className="as-game">
-
-                <div className="as-game-top">
-                  <div className="as-game-id-col">
-                    <span className="as-game-id"># {idx + 1}</span>
-                  </div>
-
-                  <div className="as-game-order">
-                    <button
-                      className="as-icon-btn as-icon-btn--red"
-                      onClick={() => deleteAgora(idx)}
-                    >
-                      🗑
-                    </button>
-                  </div>
-                </div>
-
-                <div className="as-game-fields">
-
-                  <div className="as-game-field">
-                    <label className="as-game-field-label">Agora App ID</label>
-                    <input
-                      className="as-game-input"
-                      value={item.appId}
-                      onChange={(e) => agoraChange(idx, "appId", e.target.value)}
-                      placeholder="Enter App ID"
-                    />
-                  </div>
-
-                  <div className="as-game-field">
-                    <label className="as-game-field-label">Agora Certificate</label>
-                    <input
-                      className="as-game-input"
-                      value={item.certificate}
-                      onChange={(e) => agoraChange(idx, "certificate", e.target.value)}
-                      placeholder="Enter Certificate"
-                    />
-                  </div>
-
-                </div>
-              </div>
-            ))}
           </div>
-        </Section>
-      )}
+        </div>
 
-        {/* ══ GAMES ══ */}
-        {tab === "games" && (
-          <Section
-            icon="🎮"
-            title="In-App Games"
-            desc="Manage games available inside the app — toggle, reorder, update URLs"
-            action={
-              <button className="as-btn as-btn--primary" onClick={gameAdd}>+ Add Game</button>
-            }
-          >
-            {/* Summary pills */}
-            <div className="as-games-summary">
-              <span className="as-pill as-pill--green">✓ {games.filter(g=>g.active).length} active</span>
-              <span className="as-pill as-pill--red">✕ {games.filter(g=>!g.active).length} inactive</span>
-              <span className="as-pill as-pill--blue">{games.length} total</span>
-            </div>
+        {/* ── TABS ── */}
+        <div className="as-tabs">
+          {TABS.map(t => (
+            <button key={t.key} className={`as-tab ${tab === t.key ? "on" : ""}`}
+              onClick={() => setTab(t.key)}>
+              <span className="as-tab-icon">{t.icon}</span>
+              {t.label}
+              {t.count !== undefined && <span className="as-tab-badge">{t.count}</span>}
+            </button>
+          ))}
+        </div>
 
-            {games.length === 0 ? (
-              <div className="as-games-empty">
-                <span>🎮</span>
-                <p>No games configured</p>
-                <button className="as-btn as-btn--outline" onClick={gameAdd}>+ Add First Game</button>
+        {/* ── CONTENT ── */}
+        <div className="as-body">
+
+          {/* ══ GENERAL ══ */}
+          {tab === "general" && (
+            <Section icon="⚙" title="General" desc="Core app configuration and metadata">
+              <div className="as-fields">
+                <Field label="App Version" hint="Current version shown to users, used for forced update checks">
+                  <Input value={appVersion} onChange={setAppVersion} placeholder="e.g. 1.03" />
+                </Field>
+                <Field label="Object ID" hint="Parse record identifier (read-only)">
+                  <Input value={record.id} mono readOnly />
+                </Field>
+                <Field label="Last Updated" hint="When these settings were last saved">
+                  <Input value={record.updatedAt ? new Date(record.updatedAt).toLocaleString() : "—"} mono readOnly />
+                </Field>
+                <Field label="Created At" hint="When this record was first created">
+                  <Input value={record.createdAt ? new Date(record.createdAt).toLocaleString() : "—"} mono readOnly />
+                </Field>
               </div>
-            ) : (
-              <div className="as-games-list">
-                {games.map((game, idx) => (
-                  <GameCard
-                    key={game.id || idx}
-                    game={game} idx={idx} total={games.length}
-                    onChange={gameChange}
-                    onDelete={gameDelete}
-                    onMoveUp={gameMoveUp}
-                    onMoveDown={gameMoveDown}
+              <div className="as-info-box">
+                <div className="as-info-box-icon">📱</div>
+                <div>
+                  <strong>Current Version: {appVersion || "—"}</strong>
+                  <p>The mobile app compares its installed version against this value to decide whether to prompt for an update.</p>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {/* ══ MEDIA ══ */}
+          {tab === "media" && (
+            <Section icon="🖼" title="Media Assets" desc="App logo and audio room background image">
+              <div className="as-media-grid">
+                <MediaCard
+                  label="App Logo"
+                  hint="Main logo shown in app header and splash screen"
+                  fileObj={appLogo}
+                  fieldKey="appLogo"
+                  onUpload={handleUpload}
+                  uploading={uploading}
+                />
+                <MediaCard
+                  label="Audio Room Background"
+                  hint="Background image shown in audio/voice rooms"
+                  fileObj={audioBg}
+                  fieldKey="audiobg"
+                  onUpload={handleUpload}
+                  uploading={uploading}
+                />
+                <MediaCard
+                  label="Audio Seat"
+                  hint="Mic seat icon shown in audio rooms"
+                  fileObj={audioSeat}
+                  fieldKey="audio_seat"
+                  onUpload={handleUpload}
+                  uploading={uploading}
+                />
+                <MediaCard
+                  label="Multi Room Background"
+                  hint="Background image shown in multi-host rooms"
+                  fileObj={multiBg}
+                  fieldKey="multibg"
+                  onUpload={handleUpload}
+                  uploading={uploading}
+                />
+              </div>
+            </Section>
+          )}
+
+          {/* ══ AGORA (only two input fields, using AgoraAppID and AgoraAppCertificate) ══ */}
+          {tab === "agora" && (
+            <Section icon="📡" title="Agora Configuration" desc="Agora App ID and Certificate for video/voice calls">
+              <div className="as-fields">
+                <Field label="Agora App ID" hint="Your Agora application identifier">
+                  <Input 
+                    value={agoraAppId} 
+                    onChange={setAgoraAppId} 
+                    placeholder="Enter Agora App ID" 
                   />
-                ))}
+                </Field>
+                
+                <Field label="Agora App Certificate" hint="Your Agora application certificate (for token generation)">
+                  <Input 
+                    type="password"
+                    value={agoraAppCertificate} 
+                    onChange={setAgoraAppCertificate} 
+                    placeholder="Enter Agora App Certificate" 
+                  />
+                </Field>
+                
+                <div className="as-info-box">
+                  <div className="as-info-box-icon">📡</div>
+                  <div>
+                    <strong>Agora Configuration</strong>
+                    <p>These credentials are used for video calls, voice rooms, and live streaming features.</p>
+                    <p style={{ fontSize: "12px", marginTop: "8px", color: "#f59e0b" }}>
+                      ⚠️ Keep your App Certificate secure. Never expose it to clients.
+                    </p>
+                    <p style={{ fontSize: "12px", marginTop: "4px", color: "#6b7280" }}>
+                      ✅ Stored in Parse fields: <code>AgoraAppID</code> and <code>AgoraAppCertificate</code>
+                    </p>
+                  </div>
+                </div>
               </div>
-            )}
-          </Section>
-        )}
+            </Section>
+          )}       
 
-      </div>
+          {/* ══ GAMES ══ */}
+          {tab === "games" && (
+            <Section
+              icon="🎮"
+              title="In-App Games"
+              desc="Manage games available inside the app — toggle, reorder, update URLs"
+              action={
+                <button className="as-btn as-btn--primary" onClick={gameAdd}>+ Add Game</button>
+              }
+            >
+              <div className="as-games-summary">
+                <span className="as-pill as-pill--green">✓ {games.filter(g=>g.active).length} active</span>
+                <span className="as-pill as-pill--red">✕ {games.filter(g=>!g.active).length} inactive</span>
+                <span className="as-pill as-pill--blue">{games.length} total</span>
+              </div>
 
-      {/* ── STICKY BOTTOM BAR ── */}
-      <div className={`as-bottom-bar ${unsaved ? "as-bottom-bar--visible" : ""}`}>
-        <span className="as-bottom-bar-msg">⚠ You have unsaved changes</span>
-        <div className="as-bottom-bar-btns">
-          <button className="as-btn as-btn--ghost" onClick={handleReset} disabled={saving}>↺ Discard</button>
-          <button className="as-btn as-btn--primary" onClick={handleSave} disabled={saving}>
-            {saving ? <><span className="as-spin" /> Saving…</> : "💾 Save Changes"}
-          </button>
+              {games.length === 0 ? (
+                <div className="as-games-empty">
+                  <span>🎮</span>
+                  <p>No games configured</p>
+                  <button className="as-btn as-btn--outline" onClick={gameAdd}>+ Add First Game</button>
+                </div>
+              ) : (
+                <div className="as-games-list">
+                  {games.map((game, idx) => (
+                    <GameCard
+                      key={game.id || idx}
+                      game={game} 
+                      idx={idx} 
+                      total={games.length}
+                      onChange={gameChange}
+                      onDelete={gameDelete}
+                      onMoveUp={gameMoveUp}
+                      onMoveDown={gameMoveDown}
+                      onSizePick={(i) => setSizePicker({ idx: i, game: games[i] })}
+                    />
+                  ))}
+                </div>
+              )}  
+            </Section>
+          )}
+
+        </div>
+
+        {/* ── STICKY BOTTOM BAR ── */}
+        <div className={`as-bottom-bar ${unsaved ? "as-bottom-bar--visible" : ""}`}>
+          <span className="as-bottom-bar-msg">⚠ You have unsaved changes</span>
+          <div className="as-bottom-bar-btns">
+            <button className="as-btn as-btn--ghost" onClick={handleReset} disabled={saving}>↺ Discard</button>
+            <button className="as-btn as-btn--primary" onClick={handleSave} disabled={saving}>
+              {saving ? <><span className="as-spin" /> Saving…</> : "💾 Save Changes"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {sizePicker && (
+        <PhoneSizePicker
+          game={sizePicker.game}
+          onClose={() => setSizePicker(null)}
+          onSave={(newSize) => {
+            gameChange(sizePicker.idx, "size", newSize);
+            setSizePicker(null);
+            showToast(`✓ ${sizePicker.game.name} screen set to ${Math.round(newSize * 100)}%`);
+          }}
+        />
+      )}
+    </>
   );
 }

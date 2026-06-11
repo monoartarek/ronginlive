@@ -9,6 +9,7 @@ function Sidebar({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
   // Full structured menu with FontAwesome classes
   const menu = [
     { title: 'Dashboard', icon: 'fas fa-home', path: '/' },
+    { title: 'Panels', icon: 'fas fa-cog', path: '/panels' },
     // { title: 'Market Coins', icon: 'fas fa-coins', path: '/market-coins' },
 
     {

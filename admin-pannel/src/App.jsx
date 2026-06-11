@@ -48,6 +48,7 @@ import SalaryQueryPage from './Pages/SalaryQuery';
 import FullReportPage from './Pages/FullReport';
 import GiftHistory from './Pages/GiftHistory';
 import CoinHistory from './Pages/CoinHistory';
+import Panels from './Pages/Panels';
 
 
 
@@ -199,6 +200,8 @@ function App() {
                     <Route path ="/gift-history" element={<GiftHistoryPage   />} />
 
                     <Route path ="/coin-history" element={<CoinHistoryPage/>} />
+
+                     <Route path ="/panels" element={<Panels/>} />
 
                     
 

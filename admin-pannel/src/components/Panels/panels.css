@@ -1,0 +1,289 @@
+.mp-wrapper {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 120px);
+  min-height: 500px;
+}
+
+/* LEFT PANEL */
+.mp-left {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid #eee;
+  padding-right: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mp-left-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.mp-create-btn {
+  background: #5f50e1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mp-create-form {
+  background: #f8f8f8;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mp-panel-item {
+  position: relative;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.mp-panel-item:hover { background: #f5f5f5; }
+.mp-panel-item.active { background: #eeebfd; border-color: #5f50e1; }
+
+.mp-panel-item-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mp-panel-username { font-size: 14px; font-weight: 500; }
+.mp-panel-count {
+  font-size: 11px;
+  background: #e0ddf8;
+  color: #5f50e1;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.mp-panel-url {
+  display: block;
+  font-size: 10px;
+  opacity: 0.4;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mp-delete-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  color: #e53935;
+  font-size: 12px;
+  transition: opacity 0.15s;
+}
+.mp-panel-item:hover .mp-delete-btn { opacity: 1; }
+.mp-loading, .mp-empty-left {
+  font-size: 13px;
+  opacity: 0.4;
+  padding: 16px 0;
+  text-align: center;
+}
+
+/* RIGHT PANEL */
+.mp-right {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.mp-empty-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  opacity: 0.35;
+  font-size: 15px;
+}
+
+.mp-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.mp-right-header h3 { margin: 0; font-size: 18px; }
+.mp-panel-id { font-size: 11px; opacity: 0.35; font-family: monospace; }
+
+.mp-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 3px;
+}
+.mp-tab {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.mp-tab.active { background: #fff; color: #5f50e1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+.mp-tab-content { padding-bottom: 40px; }
+
+/* Toolbar */
+.mp-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.mp-search {
+  flex: 1;
+  min-width: 160px;
+  padding: 7px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 13px;
+  background: transparent;
+  color: inherit;
+  outline: none;
+}
+.mp-search:focus { border-color: #5f50e1; }
+
+/* Progress */
+.mp-progress { margin-bottom: 16px; }
+.mp-progress span { font-size: 12px; opacity: 0.45; display: block; margin-bottom: 5px; }
+.mp-progress-bar { height: 5px; background: #eee; border-radius: 3px; }
+.mp-progress-fill { height: 100%; background: #5f50e1; border-radius: 3px; transition: width 0.3s; }
+
+/* Groups */
+.mp-groups { display: flex; flex-direction: column; gap: 8px; }
+.mp-group {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mp-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fafafa;
+  cursor: pointer;
+  user-select: none;
+}
+.mp-group-header:hover { background: #f3f3f3; }
+.mp-group-title { flex: 1; font-size: 13px; font-weight: 600; }
+.mp-group-count { font-size: 11px; opacity: 0.4; }
+
+.mp-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 10px;
+}
+.mp-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  width: calc(50% - 4px);
+  min-width: 220px;
+}
+.mp-item:hover { background: #f5f5f5; }
+.mp-item-label { flex: 1; }
+.mp-item-key {
+  font-size: 10px;
+  opacity: 0.3;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+/* Credentials tab */
+.mp-cred-form {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.mp-field { display: flex; flex-direction: column; gap: 6px; }
+.mp-field label { font-size: 12px; font-weight: 600; opacity: 0.55; text-transform: uppercase; letter-spacing: 0.04em; }
+.mp-pass-row { display: flex; gap: 8px; }
+.mp-pass-row .mp-input { flex: 1; }
+.mp-url-link { font-size: 12px; color: #5f50e1; text-decoration: none; margin-top: 2px; }
+
+.mp-input {
+  padding: 9px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: transparent;
+  color: inherit;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.mp-input:focus { border-color: #5f50e1; }
+
+/* Buttons */
+.mp-btn {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.mp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.mp-btn-outline {
+  background: transparent;
+  border: 1px solid #ddd;
+  color: inherit;
+}
+.mp-btn-primary { background: #5f50e1; color: #fff; }
+
+/* Credentials preview table */
+.mp-cred-preview {
+  background: #f8f8f8;
+  border-radius: 10px;
+  padding: 16px;
+  max-width: 480px;
+}
+.mp-cred-preview-title {
+  font-size: 12px;
+  opacity: 0.5;
+  margin: 0 0 10px;
+}
+.mp-cred-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mp-cred-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+.mp-cred-table td:first-child { opacity: 0.5; width: 100px; }
+.mp-cred-table code { font-family: monospace; font-size: 12px; }
