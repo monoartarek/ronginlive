@@ -162,6 +162,10 @@ export default function MakeReseller() {
     fetchPage(0, "all", "");
     fetchStatCounts();
   }, []); // eslint-disable-line
+  
+  useEffect(() => {
+  syncExistingResellers();
+}, []); // eslint-disable-line
 
   /* ── re-fetch on filter / search / page change ── */
   useEffect(() => {
@@ -225,55 +229,107 @@ const confirmCoin = async () => {
     setWhatsappInput(user.reseller_whatsapp || "");
   };
 
-  const confirmReseller = async () => {
-    if (!resellerModal) return;
-    const user      = resellerModal;
-    const makingRes = !user.isReseller; // true = making reseller, false = removing
-    setResellerModal(null);
-    setActionLoading(user.objectId);
-    try {
-      const obj = await new Parse.Query("_User").get(user.objectId, { useMasterKey: true });
+ const confirmReseller = async () => {
+  if (!resellerModal) return;
+  const user      = resellerModal;
+  const makingRes = !user.isReseller;
+  setResellerModal(null);
+  setActionLoading(user.objectId);
+  try {
+    const obj = await new Parse.Query("_User").get(user.objectId, { useMasterKey: true });
 
-      if (makingRes) {
-        /* ── MAKE RESELLER ── */
-        obj.set("isreseller",              true);
-        obj.set("reseller_whatsAppnumber", whatsappInput.trim() || "");
-      } else {
-        /* ── REMOVE RESELLER ── */
-        obj.set("isreseller",              false);
-        obj.set("reseller_whatsAppnumber", "");
-        obj.set("reseller_coins",          0);
-      }
-
-      await obj.save(null, { useMasterKey: true });
-
-      setUsers(list => list.map(u =>
-        u.objectId === user.objectId
-          ? {
-              ...u,
-              isReseller:        makingRes,
-              reseller_whatsapp: makingRes ? whatsappInput.trim() : "",
-              reseller_coins:    makingRes ? u.reseller_coins : 0,
-            }
-          : u
-      ));
-
-      fetchStatCounts();
-      showToast(
-        makingRes
-          ? `${user.username} is now a Reseller`
-          : `${user.username} removed from resellers`,
-        makingRes ? "success" : "info"
-      );
-
-    } catch (err) {
-      console.error("confirmReseller:", err);
-      showToast("Failed: " + err.message, "error");
-    } finally {
-      setActionLoading(null);
+    if (makingRes) {
+      obj.set("isreseller",              true);
+      obj.set("reseller_whatsAppnumber", whatsappInput.trim() || "");
+    } else {
+      obj.set("isreseller",              false);
+      obj.set("reseller_whatsAppnumber", "");
+      obj.set("reseller_coins",          0);
     }
-  };
 
+    await obj.save(null, { useMasterKey: true });
+
+    // ───── Sync with the "reseller" class ─────
+    const Reseller = Parse.Object.extend("reseller");
+    const rQuery = new Parse.Query(Reseller);
+    rQuery.equalTo("user_id", user.objectId);
+    const existingEntry = await rQuery.first({ useMasterKey: true });
+
+    if (makingRes) {
+      let resellerEntry = existingEntry || new Reseller();
+      resellerEntry.set("user_id",          user.objectId);
+      resellerEntry.set("whatsapp_number",  whatsappInput.trim() || "");
+      await resellerEntry.save(null, { useMasterKey: true });
+    } else {
+      if (existingEntry) {
+        await existingEntry.destroy({ useMasterKey: true });
+      }
+    }
+    // ─────────────────────────────────────────
+
+    setUsers(list => list.map(u =>
+      u.objectId === user.objectId
+        ? {
+            ...u,
+            isReseller:        makingRes,
+            reseller_whatsapp: makingRes ? whatsappInput.trim() : "",
+            reseller_coins:    makingRes ? u.reseller_coins : 0,
+          }
+        : u
+    ));
+
+    fetchStatCounts();
+    showToast(
+      makingRes
+        ? `${user.username} is now a Reseller`
+        : `${user.username} removed from resellers`,
+      makingRes ? "success" : "info"
+    );
+  } catch (err) {
+    console.error("confirmReseller:", err);
+    showToast("Failed: " + err.message, "error");
+  } finally {
+    setActionLoading(null);
+  }
+};
+
+
+
+const syncExistingResellers = useCallback(async () => {
+  try {
+    const User = Parse.Object.extend("_User");
+    const userQuery = new Parse.Query(User);
+    userQuery.equalTo("isreseller", true);
+    userQuery.limit(1000);
+    const resellers = await userQuery.find({ useMasterKey: true });
+
+    const Reseller = Parse.Object.extend("reseller");
+    let created = 0;
+
+    for (const userObj of resellers) {
+      const userId = userObj.id;
+      const whatsapp = userObj.get("reseller_whatsAppnumber") || "";
+
+      const rQuery = new Parse.Query(Reseller);
+      rQuery.equalTo("user_id", userId);
+      const existing = await rQuery.first({ useMasterKey: true });
+
+      if (!existing) {
+        const entry = new Reseller();
+        entry.set("user_id", userId);
+        entry.set("whatsapp_number", whatsapp);
+        await entry.save(null, { useMasterKey: true });
+        created++;
+      }
+    }
+
+    if (created > 0) {
+      console.log(`Auto-synced ${created} reseller(s) to reseller class`);
+    }
+  } catch (err) {
+    console.error("auto-sync resellers failed:", err);
+  }
+}, []);
   /* ════════════════════════════════════════════════
      RENDER
   ════════════════════════════════════════════════ */

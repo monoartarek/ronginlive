@@ -205,12 +205,7 @@ function App() {
 
                     
 
-                    
-
-                    
-
-                    
-
+                  
                     
                   </Routes>
 
